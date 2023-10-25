@@ -240,6 +240,8 @@ import be.kuleuven.pylos.game.*;
 import be.kuleuven.pylos.player.PylosPlayer;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -250,6 +252,8 @@ public class StudentPlayer extends PylosPlayer {
 	private static final boolean DEBUG = false;
 	private static final int MAX_DEPTH = 4;
 	private Action bestAction;
+
+	private HashMap<Long, Integer> prevResults = new HashMap<>();
 
 	private PylosGameSimulator simulator;
 	private PylosBoard simulatorBoard;
@@ -300,16 +304,13 @@ public class StudentPlayer extends PylosPlayer {
 		init(game, board);
 
 		if(DEBUG)System.out.println("start minimax alogrithm with depth " + MAX_DEPTH);
-		if(board.getSpheres(PLAYER_COLOR.other()).length - board.getReservesSize(PLAYER_COLOR.other()) ==  3)
-			System.out.println("test");
 		int eval = minimax(0, -999, +999);
 
 		if(DEBUG)System.out.println("evaluation: " + eval);
 		if(DEBUG)System.out.println("game state: " + game.getState().toString());
 		if(DEBUG)System.out.println("best action: " + bestAction.toString());
 		if(DEBUG)System.out.println();
-		if(bestAction == null)
-			System.err.println("de bestaction is nul");
+		if(bestAction == null) System.err.println("de bestaction is nul");
 		game.moveSphere(bestAction.getSphere(), bestAction.getLocation());
 	}
 
@@ -322,7 +323,9 @@ public class StudentPlayer extends PylosPlayer {
 
 		init(game, board);
 		minimax(0, -999, +999);
+
 		game.removeSphere(bestAction.getSphere());
+
 	}
 
 	@Override
@@ -334,7 +337,7 @@ public class StudentPlayer extends PylosPlayer {
 		init(game, board);
 		minimax(0, -999, +999);
 
-		if(bestAction.getSphere() == null)
+		if(bestAction == null)
 			game.pass();
 		else
 			game.removeSphere(bestAction.getSphere());
@@ -351,7 +354,7 @@ public class StudentPlayer extends PylosPlayer {
 		int eval = this.simulatorBoard.getReservesSize(PLAYER_COLOR) - this.simulatorBoard.getReservesSize(PLAYER_COLOR.other());
 		//System.out.println("max depth is reached, value is " + eval);
 		if(state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND)
-			eval = (color == PLAYER_COLOR)? eval+10 : eval -10;
+			eval = (color == PLAYER_COLOR)? eval+2 : eval -2;
 		return eval;
 	}
 	public int minimax(int depth, int alpha, int beta){
@@ -364,21 +367,31 @@ public class StudentPlayer extends PylosPlayer {
 		Action localBestAction = null;
 		int MiniMaxEval = (color == PLAYER_COLOR)? -999 : +999;
 
-		for (PylosSphere sphere : simulatorBoard.getSpheres(color)){
+		//first look for the spheres on the board, and start with them
+		PylosSphere[] spheres = simulatorBoard.getSpheres(color);
+		Arrays.sort(spheres, (s1, s2) ->{if(s1.getLocation() == null && s2.getLocation() != null) return 1;
+			if(s1.getLocation() != null && s2.getLocation() == null) return -1; return 0;});
+
+		//for (PylosSphere sphere : simulatorBoard.getSpheres(color)) {
+		for (PylosSphere sphere : spheres) {
 			PylosLocation prevLocation = sphere.getLocation();
-
-			if(state == PylosGameState.MOVE){
-				for(PylosLocation location : simulatorBoard.getLocations()){
-					if(sphere.canMoveTo(location)){
+			if (state == PylosGameState.MOVE) {
+				for (PylosLocation location : simulatorBoard.getLocations()) {
+					if (sphere.canMoveTo(location)) {
 						simulator.moveSphere(sphere, location);
-						int eval = minimax( depth+1, alpha, beta);
+						final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
+						Integer eval = prevResults.get(currentState);
+						if (eval == null) {
+							eval = minimax(depth + 1, alpha, beta);
+						}
+						//int eval = minimax(depth + 1, alpha, beta);
 
-						if ((color == PLAYER_COLOR && MiniMaxEval < eval) || (color != PLAYER_COLOR && MiniMaxEval > eval)) {
+						if ((color == PLAYER_COLOR && MiniMaxEval <= eval) || (color != PLAYER_COLOR && MiniMaxEval >= eval)) {
 							MiniMaxEval = eval;
 							localBestAction = new Action(location, sphere);
 						}
 
-						if(color == PLAYER_COLOR)
+						if (color == PLAYER_COLOR)
 							alpha = Math.max(alpha, eval);
 						else
 							beta = Math.min(beta, eval);
@@ -392,16 +405,21 @@ public class StudentPlayer extends PylosPlayer {
 					}
 				}
 
-			}else if((state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND) && sphere.canRemove()){
+			} else if ((state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND) && sphere.canRemove()) {
 				simulator.removeSphere(sphere);
-				int eval = minimax( depth+1, alpha, beta);
+				final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
+				Integer eval = prevResults.get(currentState);
+				if (eval == null) {
+					eval = minimax(depth + 1, alpha, beta);
+				}
+				//int eval = minimax(depth + 1, alpha, beta);
 
-				if ((color == PLAYER_COLOR && MiniMaxEval < eval) || (color != PLAYER_COLOR && MiniMaxEval > eval)) {
+				if ((color == PLAYER_COLOR && MiniMaxEval <= eval) || (color != PLAYER_COLOR && MiniMaxEval >= eval)) {
 					MiniMaxEval = eval;
 					localBestAction = new Action(null, sphere);
 				}
 
-				if(color == PLAYER_COLOR)
+				if (color == PLAYER_COLOR)
 					alpha = Math.max(alpha, eval);
 				else
 					beta = Math.min(beta, eval);
@@ -415,8 +433,45 @@ public class StudentPlayer extends PylosPlayer {
 			}
 
 		}
+
 		bestAction = localBestAction;
+//		if (bestAction == null) {
+//			System.out.println(simulator.getColor());
+//			System.out.println(simulator.getState());
+//			System.out.println(simulatorBoard.getReservesSize(simulator.getColor()));
+//			System.out.println(simulatorBoard.getNumberOfSpheresOnBoard());
+//		}
+
+		final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
+		Integer eval = prevResults.get(currentState);
+		if (eval == null) {
+			prevResults.put(currentState, MiniMaxEval);
+		}
+
 		return MiniMaxEval;
+	}
+
+	//zorgt voor slechter resultaat, maar ik heb geen idee waarom
+	private Long addGameState(long boardLong, PylosGameState state, PylosPlayerColor color) {
+		if (color == PylosPlayerColor.DARK) {
+			boardLong |= -606846976;
+		}
+		switch (state) {
+			case MOVE:
+				boardLong |= 916826976;
+				break;
+			case REMOVE_FIRST:
+				boardLong |= 816835686;
+				break;
+			case REMOVE_SECOND:
+				boardLong |= -916826976;
+				break;
+			case COMPLETED:
+				break;
+			default:
+				throw new IllegalStateException("Game state is: " + state);
+		}
+		return boardLong;
 	}
 }
 
