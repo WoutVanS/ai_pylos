@@ -393,8 +393,25 @@ public class StudentPlayer extends PylosPlayer {
 	public int evaluationFunction(PylosGameState state,PylosPlayerColor color){
 		int eval = this.simulatorBoard.getReservesSize(PLAYER_COLOR) - this.simulatorBoard.getReservesSize(PLAYER_COLOR.other());
 		//System.out.println("max depth is reached, value is " + eval);
+		//werken naar een square toe is meer waard
 		if(state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND)
 			eval = (color == PLAYER_COLOR)? eval+2 : eval -2;
+
+//		//neem hoogte ballen mee in eval -> hoe hoger ballen, hoe beter => maakt hem blijkbaar slechter
+//		PylosSphere[] mySpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR);
+//		int playerSum = 0;
+//		for (int i = 0; i < mySpheres.length && !mySpheres[i].isReserve(); i++) {
+//			playerSum += mySpheres[i].getLocation().Z;
+//		}
+//
+//		PylosSphere[] otherSpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR.other());
+//		int otherSum = 0;
+//		for (int i = 0; i < otherSpheres.length && !otherSpheres[i].isReserve(); i++) {
+//			otherSum -= otherSpheres[i].getLocation().Z;
+//		}
+//
+//		eval = eval + playerSum - otherSum;
+
 		return eval;
 	}
 
