@@ -518,14 +518,15 @@ public class StudentPlayer extends PylosPlayer {
 
 
 		simulator.pass();
-		int eval = evaluationFunction(state, color);
+		//int eval = evaluationFunction(state, color); -> mag niet met deze functie want dan krijgt pass sowieso voordeel (omdat we in state remove second zitten)
+		int eval = this.simulatorBoard.getReservesSize(PLAYER_COLOR) - this.simulatorBoard.getReservesSize(PLAYER_COLOR.other());
 		if (color == PLAYER_COLOR) {
-			if (eval >= MiniMaxEval) {
+			if (eval > MiniMaxEval) {
 				MiniMaxEval = eval;
 				bestAction = null;
 			}
 		} else {
-			if (eval <= MiniMaxEval) {
+			if (eval < MiniMaxEval) {
 				MiniMaxEval = eval;
 				bestAction = null;
 			}
