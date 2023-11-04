@@ -399,19 +399,19 @@ public class StudentPlayer extends PylosPlayer {
 			eval = (color == PLAYER_COLOR) ? eval + 2 : eval - 2;
 
 //		//neem hoogte ballen mee in eval -> hoe hoger ballen, hoe beter => maakt hem blijkbaar slechter
-		PylosSphere[] mySpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR);
-		int playerSum = 0;
-		for (int i = 0; i < mySpheres.length && !mySpheres[i].isReserve(); i++) {
-			playerSum += (int) mySpheres[i].getLocation().Z / 30;        //delen door 30 omdat anders het voordeliger is om twee ballen weg te nemen van boven, wat zorgt voor meer reserveballen
-		}
+//		PylosSphere[] mySpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR);
+//		int playerSum = 0;
+//		for (int i = 0; i < mySpheres.length && !mySpheres[i].isReserve(); i++) {
+//			playerSum += (int) mySpheres[i].getLocation().Z;        //delen door 30 omdat anders het voordeliger is om twee ballen weg te nemen van boven, wat zorgt voor meer reserveballen
+//		}
+//
+//		PylosSphere[] otherSpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR.other());
+//		int otherSum = 0;
+//		for (int i = 0; i < otherSpheres.length && !otherSpheres[i].isReserve(); i++) {
+//			otherSum -= (int) otherSpheres[i].getLocation().Z;
+//		}
 
-		PylosSphere[] otherSpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR.other());
-		int otherSum = 0;
-		for (int i = 0; i < otherSpheres.length && !otherSpheres[i].isReserve(); i++) {
-			otherSum -= (int) otherSpheres[i].getLocation().Z / 30;
-		}
-
-		eval = eval + playerSum - otherSum;
+//		eval = eval + playerSum - otherSum;
 
 		return eval;
 	}
@@ -476,13 +476,14 @@ public class StudentPlayer extends PylosPlayer {
 //		if (reserve != null) { size = 15 - simulatorBoard.getReservesSize(color) + 1; }
 //		else { size = 15 - simulatorBoard.getReservesSize(color); }
 
-		/* shuffle */
+		//shuffle locations so player does not always start with same move
 		ArrayList<PylosLocation> locationsList = new ArrayList(Arrays.asList(locations));
-		Collections.shuffle(locationsList, getRandom());
+		Collections.shuffle(locationsList, this.getRandom());
 		locations = new PylosLocation[locations.length];
 		for (int i = 0; i < locations.length; i++) {
 			locations[i] = locationsList.get(i);
 		}
+
 //		ArrayList<PylosSphere> sphereList = new ArrayList<>(Arrays.asList(allSpheres));
 //		Collections.shuffle(sphereList, getRandom());
 //		PylosSphere[] spheres = new PylosSphere[size];
@@ -497,7 +498,7 @@ public class StudentPlayer extends PylosPlayer {
 
 		for (int i = 0; i < spheres.length && !prune; i++) {
 			PylosSphere sphere = spheres[i];
-			for (PylosLocation location : simulatorBoard.getLocations()) {
+			for (PylosLocation location : locations) {
 				if (sphere.canMoveTo(location) && !extraPrune) {
 					PylosLocation prevLocation = sphere.getLocation();
 					simulator.moveSphere(sphere, location);
@@ -509,7 +510,7 @@ public class StudentPlayer extends PylosPlayer {
 						}
 						if (MiniMaxEval >= alpha) {
 							prune = true;
-							if (depth > 0) extraPrune = true;	//prune on locations also -> much faster for larger depth
+							if (depth > 2) extraPrune = true;	//prune on locations also -> much faster for larger depth
 						}
 					} else {
 						if (eval < MiniMaxEval) {
@@ -518,7 +519,7 @@ public class StudentPlayer extends PylosPlayer {
 						}
 						if (MiniMaxEval <= alpha) {
 							prune = true;
-							if (depth > 0) extraPrune = true;
+							if (depth > 2) extraPrune = true;
 						}
 					}
 					if (prevLocation != null) {

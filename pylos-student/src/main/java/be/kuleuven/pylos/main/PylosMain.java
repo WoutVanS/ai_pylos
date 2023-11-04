@@ -48,7 +48,7 @@ public class PylosMain {
         PylosPlayer p1 = new StudentPlayer();
         PylosPlayer p2 = new PylosPlayerMiniMax(4);
 //        PylosPlayer p1 = new PylosPlayerMiniMax(2);
-//        PylosPlayer p2 = new StudentPlayerMiniMax(4);
+//        PylosPlayer p2 = new StudentPlayerMiniMax(2);
 //        PylosPlayer p2 = new testPlayerStudent();
 
         Battle.play(p1, p2, nRuns);
