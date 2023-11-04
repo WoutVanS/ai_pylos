@@ -12,6 +12,8 @@ import be.kuleuven.pylos.player.codes.PylosPlayerBestFit;
 import be.kuleuven.pylos.player.codes.PylosPlayerMiniMax;
 import be.kuleuven.pylos.player.codes.PylosPlayerRandomFit;
 import be.kuleuven.pylos.player.student.StudentPlayer;
+import be.kuleuven.pylos.player.student.StudentPlayerMiniMax;
+import be.kuleuven.pylos.player.student.testPlayerStudent;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,7 +34,7 @@ public class PylosMain {
         Random random = new Random(0);
 
         PylosPlayer playerLight = new StudentPlayer();
-        PylosPlayer playerDark = new PylosPlayerMiniMax(2);
+        PylosPlayer playerDark = new PylosPlayerMiniMax(4);
 
         PylosBoard pylosBoard = new PylosBoard();
         PylosGame pylosGame = new PylosGame(pylosBoard, playerLight, playerDark, random, PylosGameObserver.CONSOLE_GAME_OBSERVER, PylosPlayerObserver.NONE);
@@ -45,6 +47,9 @@ public class PylosMain {
 
         PylosPlayer p1 = new StudentPlayer();
         PylosPlayer p2 = new PylosPlayerMiniMax(4);
+//        PylosPlayer p1 = new PylosPlayerMiniMax(2);
+//        PylosPlayer p2 = new StudentPlayerMiniMax(4);
+//        PylosPlayer p2 = new testPlayerStudent();
 
         Battle.play(p1, p2, nRuns);
     }
