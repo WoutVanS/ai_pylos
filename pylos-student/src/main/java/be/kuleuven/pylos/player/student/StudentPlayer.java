@@ -242,51 +242,6 @@ import be.kuleuven.pylos.player.PylosPlayer;
 import java.io.Serializable;
 import java.util.*;
 
-/**
- * Created by Jan on 20/02/2015.
- */
-
-//class BoardState implements Serializable {
-//	private long board;
-//	private PylosGameState state;
-//	private PylosPlayerColor color;
-//
-//	//private int eval;
-//
-//	public BoardState(long board, PylosGameState gameState, PylosPlayerColor color) {
-//		this.board = board;
-//		this.state = gameState;
-//		this.color = color;
-//	}
-//
-//	@Override
-//	public boolean equals(Object o) {
-//		if (this == o) return true;
-//		if (o == null || getClass() != o.getClass()) return false;
-//		BoardState that = (BoardState) o;
-//		return Objects.equals(board, that.board) && state == that.state && color == that.color;
-//	}
-//
-//	@Override
-//	public int hashCode() {
-//		return Objects.hash(board, state, color);
-//	}
-//
-//	public boolean isBoardState(long board, PylosGameState gameState, PylosPlayerColor color) {
-//		if (this.board == board && this.state == gameState && this.color == color ) return true;
-//		else return false;
-//	}
-//
-//	@Override
-//	public String toString() {
-//		return "BoardState{" +
-//				"board=" + board +
-//				", state=" + state +
-//				", color=" + color +
-//				'}';
-//	}
-//}
-
 public class StudentPlayer extends PylosPlayer {
 
 	private static final boolean DEBUG = false;
@@ -333,26 +288,9 @@ public class StudentPlayer extends PylosPlayer {
 
 	@Override
 	public void doMove(PylosGameIF game, PylosBoard board) {
-		/* board methods
-		 * 	PylosLocation[] allLocations = board.getLocations();
-		 * 	PylosSphere[] allSpheres = board.getSpheres();
-		 * 	PylosSphere[] mySpheres = board.getSpheres(this);
-		 * 	PylosSphere myReserveSphere = board.getReserve(this); */
 
-		/* game methods
-		 * game.moveSphere(myReserveSphere, allLocations[0]); */
-		if (DEBUG) System.out.println("student player color:" + PLAYER_COLOR);
-		if (DEBUG) System.out.println("start simulator init");
 		init(game, board);
-
-		if (DEBUG) System.out.println("start minimax alogrithm with depth " + MAX_DEPTH);
 		int eval = minimax(0, -999, +999);
-
-		if (DEBUG) System.out.println("evaluation: " + eval);
-		if (DEBUG) System.out.println("game state: " + game.getState().toString());
-		if (DEBUG) System.out.println("best action: " + bestAction.toString());
-		if (DEBUG) System.out.println();
-		if (bestAction == null) System.err.println("de bestaction is nul");
 		game.moveSphere(bestAction.getSphere(), bestAction.getLocation());
 	}
 
@@ -393,26 +331,9 @@ public class StudentPlayer extends PylosPlayer {
 
 	public int evaluationFunction(PylosGameState state, PylosPlayerColor color) {
 		int eval = this.simulatorBoard.getReservesSize(PLAYER_COLOR) - this.simulatorBoard.getReservesSize(PLAYER_COLOR.other());
-		//System.out.println("max depth is reached, value is " + eval);
 		//werken naar een square toe is meer waard
-		if (state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND)
+		if (state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND) // TODO Waarom 2 verminderen als second (dan heb je toch al 1 verwijdert dus verwijder je er te veel)
 			eval = (color == PLAYER_COLOR) ? eval + 2 : eval - 2;
-
-//		//neem hoogte ballen mee in eval -> hoe hoger ballen, hoe beter => maakt hem blijkbaar slechter
-//		PylosSphere[] mySpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR);
-//		int playerSum = 0;
-//		for (int i = 0; i < mySpheres.length && !mySpheres[i].isReserve(); i++) {
-//			playerSum += (int) mySpheres[i].getLocation().Z;        //delen door 30 omdat anders het voordeliger is om twee ballen weg te nemen van boven, wat zorgt voor meer reserveballen
-//		}
-//
-//		PylosSphere[] otherSpheres = this.simulatorBoard.getSpheres(PLAYER_COLOR.other());
-//		int otherSum = 0;
-//		for (int i = 0; i < otherSpheres.length && !otherSpheres[i].isReserve(); i++) {
-//			otherSum -= (int) otherSpheres[i].getLocation().Z;
-//		}
-
-//		eval = eval + playerSum - otherSum;
-
 		return eval;
 	}
 
@@ -420,33 +341,29 @@ public class StudentPlayer extends PylosPlayer {
 		PylosGameState state = simulator.getState();
 		PylosPlayerColor color = simulator.getColor();
 
-		if (depth == MAX_DEPTH || state == PylosGameState.COMPLETED) {
+		int MiniMaxEval = 0;
+
+		if (depth == MAX_DEPTH) {
 			return evaluationFunction(state, color);
 		}
 
-		int MiniMaxEval;
-
-		if (state == PylosGameState.MOVE) {
+		if (state == PylosGameState.COMPLETED) {
+			if (simulator.getWinner() == PLAYER_COLOR) MiniMaxEval = 990;
+			else MiniMaxEval = -990;
+		}else if (state == PylosGameState.MOVE) {
 			MiniMaxEval = minimaxMove(depth, alpha);
 		} else if (state == PylosGameState.REMOVE_FIRST) {
 			MiniMaxEval = minimaxRemoveFirst(depth, beta);
 		} else if (state == PylosGameState.REMOVE_SECOND) {
 			MiniMaxEval = minimaxRemoveSecond(depth, beta);
-		} else {
-			MiniMaxEval = simulator.getWinner() == PLAYER_COLOR ? 2000 : -2000;
-			if (simulator.getWinner() == PLAYER_COLOR) {
-				MiniMaxEval -= depth;
-			} else {
-				MiniMaxEval += depth;
-			}
 		}
 
 		return MiniMaxEval;
 	}
 
 	//problemen met huidige implementatie
-		// player probeert nooit een square te vormen (wel blocken)
-		// player legt nooit altijd resrvebal op laagste verdiep, nooit op hoger (zelfs als er een plaats vrij is)
+	// player probeert nooit een square te vormen (wel blocken)
+	// player legt nooit altijd resrvebal op laagste verdiep, nooit op hoger (zelfs als er een plaats vrij is)
 
 	public int minimaxMove(int depth, int alpha) {
 		PylosPlayerColor color = simulator.getColor();
@@ -468,13 +385,7 @@ public class StudentPlayer extends PylosPlayer {
 		});
 
 		//error nog zoeken,  waarom wordt sphere null?
-//		PylosSphere reserve = simulatorBoard.getReserve(color);
-//		PylosSphere[] allSpheres = simulatorBoard.getSpheres(color);
 		PylosLocation[] locations = simulatorBoard.getLocations();
-//
-//		int size;
-//		if (reserve != null) { size = 15 - simulatorBoard.getReservesSize(color) + 1; }
-//		else { size = 15 - simulatorBoard.getReservesSize(color); }
 
 		//shuffle locations so player does not always start with same move
 		ArrayList<PylosLocation> locationsList = new ArrayList(Arrays.asList(locations));
@@ -483,18 +394,6 @@ public class StudentPlayer extends PylosPlayer {
 		for (int i = 0; i < locations.length; i++) {
 			locations[i] = locationsList.get(i);
 		}
-
-//		ArrayList<PylosSphere> sphereList = new ArrayList<>(Arrays.asList(allSpheres));
-//		Collections.shuffle(sphereList, getRandom());
-//		PylosSphere[] spheres = new PylosSphere[size];
-//		for (int i = 0; i < size-1; i++) {
-//			PylosSphere ps = sphereList.get(i);
-//			if (!(ps.getLocation() != null)) {
-//				spheres[i] = ps;
-//			}
-//		}
-//		//add reserve sphere
-//		if (reserve != null ) spheres[spheres.length-1] = reserve;
 
 		for (int i = 0; i < spheres.length && !prune; i++) {
 			PylosSphere sphere = spheres[i];
@@ -508,9 +407,10 @@ public class StudentPlayer extends PylosPlayer {
 							MiniMaxEval = eval;
 							localBestAction = new Action(location, sphere);
 						}
+
 						if (MiniMaxEval >= alpha) {
 							prune = true;
-							if (depth > 2) extraPrune = true;	//prune on locations also -> much faster for larger depth
+							if (depth > 3) extraPrune = true;	//prune on locations also -> much faster for larger depth
 						}
 					} else {
 						if (eval < MiniMaxEval) {
@@ -519,7 +419,7 @@ public class StudentPlayer extends PylosPlayer {
 						}
 						if (MiniMaxEval <= alpha) {
 							prune = true;
-							if (depth > 2) extraPrune = true;
+							if (depth >3) extraPrune = true;
 						}
 					}
 					if (prevLocation != null) {
@@ -565,7 +465,8 @@ public class StudentPlayer extends PylosPlayer {
 					}
 					if (MiniMaxEval <= beta) prune = true;
 				}
-				simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.REMOVE_FIRST, color);
+				 if(simulator.getState() == PylosGameState.REMOVE_SECOND) simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.REMOVE_FIRST, color);
+				 else simulator.undoRemoveSecondSphere(sphere, prevLocation, PylosGameState.REMOVE_SECOND, color);
 			}
 		}
 		bestAction = localBestAction;
@@ -600,235 +501,4 @@ public class StudentPlayer extends PylosPlayer {
 
 		return MiniMaxEval;
 	}
-
-
-//	public int minimax(int depth, int alpha, int beta){
-//		PylosGameState state = simulator.getState();
-//		PylosPlayerColor color = simulator.getColor();
-//
-//		boolean prune = false;
-//		//System.out.println("State: " + simulator.getState() + " Color: " + color + " depth: " + depth);
-//
-//		if(depth == MAX_DEPTH || state == PylosGameState.COMPLETED)
-//			return evaluationFunction(state, color);
-//
-//		Action localBestAction = null;
-//		int MiniMaxEval = (color == PLAYER_COLOR)? -999 : +999;
-//
-//		//first look for the spheres on the board, and start with them
-//		PylosSphere[] spheres = simulatorBoard.getSpheres(color);
-//		Arrays.sort(spheres, (s1, s2) ->{if(s1.getLocation() == null && s2.getLocation() != null) return 1;
-//			if(s1.getLocation() != null && s2.getLocation() == null) return -1; return 0;});
-//
-//		//for (PylosSphere sphere : simulatorBoard.getSpheres(color)) {
-//		for (PylosSphere sphere : spheres) {
-//			if (!prune) {
-//				PylosLocation prevLocation = sphere.getLocation();
-//				if (state == PylosGameState.MOVE) {
-//					//TODO bezette locations eerst nog wegfilteren
-//					for (PylosLocation location : simulatorBoard.getLocations()) {
-//						if (sphere.canMoveTo(location) && !prune) {
-//							simulator.moveSphere(sphere, location);
-////						final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
-////						Integer eval = prevResults.get(currentState);
-////						if (eval == null) {
-////							eval = minimax(depth + 1, alpha, beta);
-////						}
-//
-//							int eval = minimax(depth + 1, alpha, beta);
-//
-////						BoardState currentBoardState = new BoardState(simulatorBoard.toLong(), state, color);
-////						int eval;
-////						if (prevResults.containsKey(currentBoardState.toString())) eval = prevResults.get(currentBoardState.toString());
-////						else eval = minimax(depth+1, alpha, beta);
-//
-//							if (color == PLAYER_COLOR) {
-//								alpha = Math.max(alpha, eval);
-//								if (MiniMaxEval <= eval) {
-//									MiniMaxEval = eval;
-//									localBestAction = new Action(location, sphere);
-//								}
-//								if (MiniMaxEval > alpha) prune = true;
-//							} else {
-//								beta = Math.min(beta, eval);
-//								if (MiniMaxEval >= eval) {
-//									MiniMaxEval = eval;
-//									localBestAction = new Action(location, sphere);
-//								}
-//								if (MiniMaxEval < beta) prune = true;
-//							}
-//
-////						if ((color == PLAYER_COLOR && MiniMaxEval <= eval) || (color != PLAYER_COLOR && MiniMaxEval >= eval)) {
-////							MiniMaxEval = eval;
-////							localBestAction = new Action(location, sphere);
-////						}
-////
-////						if (color == PLAYER_COLOR)
-////							alpha = Math.max(alpha, eval);
-////						else
-////							beta = Math.min(beta, eval);
-//
-//							if (prevLocation != null) {
-//								simulator.undoMoveSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//							} else {
-//								simulator.undoAddSphere(sphere, PylosGameState.MOVE, color);
-//							}
-//
-//							//if (beta <= alpha) break;
-//						}
-//
-//					}
-//				} else if ((state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND) && sphere.canRemove()) {
-//					if (!prune) {
-//						simulator.removeSphere(sphere);
-////				final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
-////				Integer eval = prevResults.get(currentState);
-////				if (eval == null) {
-////					eval = minimax(depth + 1, alpha, beta);
-////				}
-//
-//						int eval = minimax(depth + 1, alpha, beta);
-//
-////				BoardState currentBoardState = new BoardState(simulatorBoard.toLong(), state, color);
-////				int eval;
-////				if (prevResults.containsKey(currentBoardState.toString())) eval = prevResults.get(currentBoardState.toString());
-////				else eval = minimax(depth+1, alpha, beta);
-//
-//						if (color == PLAYER_COLOR) {
-//							alpha = Math.max(alpha, eval);
-//							if (MiniMaxEval <= eval) {
-//								localBestAction = new Action(null, sphere);
-//								MiniMaxEval = eval;
-//							}
-//							if (MiniMaxEval > alpha) prune = true;
-//
-//						} else {
-//							beta = Math.min(beta, eval);
-//							if (MiniMaxEval >= eval) {
-//								localBestAction = new Action(null, sphere);
-//								MiniMaxEval = eval;
-//							}
-//							if (MiniMaxEval < beta) prune = true;
-//						}
-//
-//
-////				if ((color == PLAYER_COLOR && MiniMaxEval <= eval) || (color != PLAYER_COLOR && MiniMaxEval >= eval)) {
-////					MiniMaxEval = eval;
-////					localBestAction = new Action(null, sphere);
-////				}
-////
-////				if (color == PLAYER_COLOR)
-////					alpha = Math.max(alpha, eval);
-////				else
-////					beta = Math.min(beta, eval);
-//
-//						if (state == PylosGameState.REMOVE_FIRST)
-//							simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//						else
-//							simulator.undoRemoveSecondSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//
-//						//if (beta <= alpha) break;
-//					}
-//				}
-//			}
-//		}
-//
-//		bestAction = localBestAction;
-////		if (bestAction == null) {
-////			System.out.println(simulator.getColor());
-////			System.out.println(simulator.getState());
-////			System.out.println(simulatorBoard.getReservesSize(simulator.getColor()));
-////			System.out.println(simulatorBoard.getNumberOfSpheresOnBoard());
-////		}
-//
-////		final Long currentState = addGameState(simulatorBoard.toLong(), state, color);
-////		Integer eval = prevResults.get(currentState);
-////		if (eval == null) {
-////			prevResults.put(currentState, MiniMaxEval);
-////		}
-//
-////		BoardState currentBoardState = new BoardState(simulatorBoard.toLong(), state, color);
-////		if (!prevResults.containsKey(currentBoardState.toString())) {
-////			prevResults.put(currentBoardState.toString(), MiniMaxEval);
-////		}
-//
-//		return MiniMaxEval;
-//	}
-
-
-//	public int minimax(int depth){
-//		Action localBestAction = null;
-//
-//		PylosGameState state = simulator.getState();
-//		PylosPlayerColor color = simulator.getColor();
-//
-//		if(depth == MAX_DEPTH || state == PylosGameState.COMPLETED)
-//			return evaluationFunction(state, color);
-//
-//
-//		int MiniMaxEval = (color == PLAYER_COLOR)? -999 : +999;
-//		switch (state){
-//			case MOVE:
-//				for (PylosSphere sphere : simulatorBoard.getSpheres(color)){
-//					for(PylosLocation location : simulatorBoard.getLocations()){
-//						if(sphere.canMoveTo(location)){
-//							PylosLocation prevLocation = sphere.getLocation();
-//
-//							simulator.moveSphere(sphere, location);
-//							int eval = minimax( depth+1);
-//
-//							if (prevLocation != null)
-//								simulator.undoMoveSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//							else
-//								simulator.undoAddSphere(sphere, PylosGameState.MOVE, color);
-//
-//							if (color == PLAYER_COLOR) {
-//								if (MiniMaxEval < eval) {
-//									MiniMaxEval = eval;
-//									localBestAction = new Action(location, sphere);
-//								}
-//							}
-//							else{
-//								if (MiniMaxEval > eval){
-//									MiniMaxEval = eval;
-//									localBestAction = new Action(location, sphere);
-//								}
-//							}
-//						}
-//					}
-//				}
-//				break;
-//			case REMOVE_FIRST, REMOVE_SECOND:
-//				for (PylosSphere sphere : simulatorBoard.getSpheres(color)){
-//					if(sphere.canRemove()){
-//						PylosLocation prevLocation = sphere.getLocation();
-//
-//						simulator.removeSphere(sphere);
-//						int eval = minimax(depth+1);
-//
-//						if (state == PylosGameState.REMOVE_FIRST)
-//							simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//						else
-//							simulator.undoRemoveSecondSphere(sphere, prevLocation, PylosGameState.MOVE, color);
-//
-//						if (color == PLAYER_COLOR) {
-//							if (MiniMaxEval < eval) {
-//								MiniMaxEval = eval;
-//								localBestAction = new Action(null, sphere);
-//							}
-//						}
-//						else{
-//							if (MiniMaxEval > eval){
-//								MiniMaxEval = eval;
-//								localBestAction = new Action(null, sphere);
-//							}
-//						}
-//						break;
-//					}
-//				}
-//				break;
-//		}
-//		bestAction = localBestAction;
-//		return MiniMaxEval;
-//	}
 }

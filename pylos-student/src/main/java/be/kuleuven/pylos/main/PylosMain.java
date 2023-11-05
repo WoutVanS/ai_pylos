@@ -46,7 +46,7 @@ public class PylosMain {
         int nRuns = 100;
 
         PylosPlayer p1 = new StudentPlayer();
-        PylosPlayer p2 = new PylosPlayerMiniMax(4);
+        PylosPlayer p2 = new PylosPlayerMiniMax4();
 //        PylosPlayer p1 = new PylosPlayerMiniMax(2);
 //        PylosPlayer p2 = new StudentPlayerMiniMax(2);
 //        PylosPlayer p2 = new testPlayerStudent();
