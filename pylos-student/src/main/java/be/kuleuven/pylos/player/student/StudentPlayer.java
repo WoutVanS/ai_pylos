@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class StudentPlayer extends PylosPlayer {
 
 	private static final boolean DEBUG = false;
-	private static final int MAX_DEPTH = 3;
+	private static final int MAX_DEPTH = 8;
 	private Action bestAction;
 
 	private PylosGameSimulator simulator;
@@ -125,6 +125,7 @@ public class StudentPlayer extends PylosPlayer {
 	public int minimax(int depth, int alpha, int beta){
 		PylosGameState state = simulator.getState();
 		PylosPlayerColor color = simulator.getColor();
+		boolean reserveBallUsed = false;
 
 		if(depth == MAX_DEPTH || state == PylosGameState.COMPLETED) {
 			return evaluationFunction(state, color);
@@ -143,7 +144,10 @@ public class StudentPlayer extends PylosPlayer {
 
 
 		for (PylosSphere sphere : spheres){
-
+			if(sphere.getLocation() == null){
+				if(reserveBallUsed) break;
+				reserveBallUsed = true;
+			}
 
 			PylosLocation prevLocation = sphere.getLocation();
 

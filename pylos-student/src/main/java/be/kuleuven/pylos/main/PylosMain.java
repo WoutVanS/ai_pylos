@@ -44,7 +44,7 @@ public class PylosMain {
         int nRuns = 100;
 
         PylosPlayer p1 = new StudentPlayer();
-        PylosPlayer p2 = new PylosPlayerMiniMax(4);
+        PylosPlayer p2 = new PylosPlayerMiniMax4();
 
         Battle.play(p1, p2, nRuns);
     }
