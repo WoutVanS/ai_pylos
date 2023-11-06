@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class StudentPlayer extends PylosPlayer {
 
 	private static final boolean DEBUG = false;
-	private static final int MAX_DEPTH = 8;
+	private static final int MAX_DEPTH = 10;
 	private Action bestAction;
 
 	private PylosGameSimulator simulator;
@@ -115,11 +115,19 @@ public class StudentPlayer extends PylosPlayer {
 
 	}
 
-	public int evaluationFunction(PylosGameState state,PylosPlayerColor color){
+	public int evaluationFunction(){
 		int eval = this.simulatorBoard.getReservesSize(PLAYER_COLOR) - this.simulatorBoard.getReservesSize(PLAYER_COLOR.other());
 		//System.out.println("max depth is reached, value is " + eval);
-		if(state == PylosGameState.REMOVE_FIRST || state == PylosGameState.REMOVE_SECOND)
-			eval = (color == PLAYER_COLOR)? eval+2 : eval -2;
+//		if(state == PylosGameState.REMOVE_FIRST)
+//			eval = (color == PLAYER_COLOR)? eval+2 : eval -2;
+//		if(state == PylosGameState.REMOVE_SECOND)
+//			eval = (color == PLAYER_COLOR)? eval+1 : eval -1;
+
+		for(PylosSquare square: simulatorBoard.getAllSquares()){
+			if (square.getInSquare(PLAYER_COLOR) == 1 && square.getInSquare(PLAYER_COLOR.other()) == 3)
+				eval+=2;
+		}
+
 		return eval;
 	}
 	public int minimax(int depth, int alpha, int beta){
@@ -128,7 +136,7 @@ public class StudentPlayer extends PylosPlayer {
 		boolean reserveBallUsed = false;
 
 		if(depth == MAX_DEPTH || state == PylosGameState.COMPLETED) {
-			return evaluationFunction(state, color);
+			return evaluationFunction();
 		}
 
 		Action localBestAction = null;
@@ -152,7 +160,9 @@ public class StudentPlayer extends PylosPlayer {
 			PylosLocation prevLocation = sphere.getLocation();
 
 			if(state == PylosGameState.MOVE){
+				if(!sphere.canMove()) continue;
 				for(PylosLocation location : locations){
+					if(!location.isUsable()) continue;
 					if(sphere.canMoveTo(location)){
 						simulator.moveSphere(sphere, location);
 						eval = minimax( depth+1, alpha, beta);
@@ -191,9 +201,9 @@ public class StudentPlayer extends PylosPlayer {
 					beta = Math.min(beta, eval);
 
 				if (state == PylosGameState.REMOVE_FIRST)
-					simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.MOVE, color);
+					simulator.undoRemoveFirstSphere(sphere, prevLocation, PylosGameState.REMOVE_FIRST, color);
 				else
-					simulator.undoRemoveSecondSphere(sphere, prevLocation, PylosGameState.MOVE, color);
+					simulator.undoRemoveSecondSphere(sphere, prevLocation, PylosGameState.REMOVE_SECOND, color);
 
 			}
 			else if(state == PylosGameState.REMOVE_SECOND && !sphere.canRemove()){
