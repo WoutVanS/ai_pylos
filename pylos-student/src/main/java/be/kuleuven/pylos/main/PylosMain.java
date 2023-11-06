@@ -22,8 +22,8 @@ public class PylosMain {
         /* !!! jvm argument !!! -ea */
 
         //startSingleGame();
-        //startBattle();
-        startBattleMultithreaded();
+        startBattle();
+        //startBattleMultithreaded();
         //startRoundRobinTournament();
     }
 
@@ -44,7 +44,7 @@ public class PylosMain {
         int nRuns = 100;
 
         PylosPlayer p1 = new StudentPlayer();
-        PylosPlayer p2 = new PylosPlayerMiniMax(2);
+        PylosPlayer p2 = new PylosPlayerMiniMax(4);
 
         Battle.play(p1, p2, nRuns);
     }
@@ -62,7 +62,7 @@ public class PylosMain {
         int nThreads =10 ;
 
         Class<? extends PylosPlayer> c1 = StudentPlayer.class;
-        Class<? extends PylosPlayer> c2 = PylosPlayerMiniMax2.class;
+        Class<? extends PylosPlayer> c2 = PylosPlayerMiniMax4.class;
 
         BattleMT.play(c1, c2, nRuns, nThreads);
     }
